@@ -11,13 +11,12 @@ RUN apt-get update && apt-get install -y \
 ENV PATH="/root/.local/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
 
-COPY pyproject.toml ./
-COPY README.md ./
-COPY stateless_microservice ./stateless_microservice
-COPY examples ./examples
+COPY . ./service
+
+WORKDIR /app/service
 
 RUN uv pip install --system .
 
 EXPOSE 8010
 
-CMD ["uvicorn", "examples.image_format_conversion_service.main:app", "--host", "0.0.0.0", "--port", "8010"]
+CMD ["uvicorn", "image_format_conversion_service.main:app", "--host", "0.0.0.0", "--port", "8010"]

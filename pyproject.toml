@@ -19,5 +19,4 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = [
     "stateless_microservice",
-    "examples/image_format_conversion_service",
 ]
