@@ -22,7 +22,6 @@ curl -X POST http://localhost:8010/media/image/convert \
 ## Run with Docker Compose
 
 ```bash
-cd examples/image_format_conversion_service
 cp .env.example .env    # edit with your S3 credentials
 docker compose up --build
 ```
