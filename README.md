@@ -46,4 +46,27 @@ This repo contains a library for quickly generating stateless microservices. It 
     )
     ```
 3. Use the helper utilities from `stateless_microservice.direct` when you need to read/write objects in the configured S3 bucket without managing boto3 boilerplate.
+
+    ```python
+    from stateless_microservice.direct import (
+        fetch_s3_bytes,
+        render_bytes,
+        run_blocking,
+    )
+
+    await fetch_s3_bytes("s3://bucket/key")  # Read object bytes with shared client/session.
+    render_bytes(b"...", media_type="image/png")  # Wrap raw bytes for FastAPI responses.
+    await run_blocking(callable_fn)  # Offload CPU-bound work to a thread pool.
+    ```
 4. Copy the example Dockerfile/compose setup to deploy dedicated services (each service keeps its own dependencies and scale profile).
+   
+    ```
+    my-stateless-service/
+    ├── docker-compose.yml
+    ├── Dockerfile
+    ├── pyproject.toml          # Declares dependencies (including amplify-stateless)
+    └── my_stateless_service/   # Python package for your processor + entrypoint
+        ├── __init__.py
+        ├── processor.py        # Subclass of BaseProcessor with StatelessAction definitions
+        └── main.py             # create_app + uvicorn entrypoint
+    ```
