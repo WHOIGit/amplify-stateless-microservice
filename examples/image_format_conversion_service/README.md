@@ -6,6 +6,13 @@ Stateless FastAPI service that exposes one helper endpoint:
 
 The service demonstrates how to use `StatelessAction` descriptors with the `stateless_microservice` factory to expose immediate responses.
 
+## Run with Docker Compose
+
+```bash
+cp .env.example .env    # edit with your S3 credentials
+docker compose up --build
+```
+
 ## Request Example
 
 ```bash
@@ -17,11 +24,4 @@ curl -X POST http://localhost:8010/media/image/convert \
         "source_uri": "s3://media-tools/examples/sample.tiff",
         "target_format": "png"
       }'
-```
-
-## Run with Docker Compose
-
-```bash
-cp .env.example .env    # edit with your S3 credentials
-docker compose up --build
 ```
