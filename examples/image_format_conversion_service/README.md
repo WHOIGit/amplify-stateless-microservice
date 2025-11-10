@@ -4,7 +4,7 @@ Stateless FastAPI service that exposes one helper endpoint:
 
 - `POST /media/image/convert` — Fetch an image from S3, optionally convert mode, and re-encode to a new format.
 
-The service demonstrates how to use `StatelessAction` descriptors with the `stateless_api_platform` factory to expose immediate responses.
+The service demonstrates how to use `StatelessAction` descriptors with the `stateless_microservice` factory to expose immediate responses.
 
 ## Request Example
 

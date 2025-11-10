@@ -1,6 +1,6 @@
 """FastAPI entrypoint for the image format conversion stateless service."""
 
-from stateless_api_platform import ServiceConfig, create_app
+from stateless_microservice import ServiceConfig, create_app
 
 from .processor import ImageConvertProcessor
 

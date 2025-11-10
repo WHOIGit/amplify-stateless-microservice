@@ -1,4 +1,4 @@
-"""Stateless API Platform - lightweight toolkit for synchronous FastAPI services."""
+"""Stateless Microservice toolkit for synchronous FastAPI services."""
 
 from .processor import BaseProcessor, StatelessAction
 from .api import create_app, ServiceConfig

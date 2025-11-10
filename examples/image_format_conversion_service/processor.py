@@ -8,8 +8,8 @@ from fastapi import HTTPException
 from PIL import Image
 from pydantic import BaseModel, Field
 
-from stateless_api_platform import BaseProcessor, StatelessAction
-from stateless_api_platform.direct import fetch_s3_bytes, render_bytes, run_blocking
+from stateless_microservice import BaseProcessor, StatelessAction
+from stateless_microservice.direct import fetch_s3_bytes, render_bytes, run_blocking
 
 logger = logging.getLogger(__name__)
 

@@ -13,7 +13,7 @@ ENV PYTHONUNBUFFERED=1
 
 COPY pyproject.toml ./
 COPY README.md ./
-COPY stateless_api_platform ./stateless_api_platform
+COPY stateless_microservice ./stateless_microservice
 COPY examples ./examples
 
 RUN uv pip install --system .
