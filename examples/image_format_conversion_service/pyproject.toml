@@ -5,7 +5,7 @@ description = "Example microservice that converts S3 images with the stateless-m
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-#    "amplify-stateless>=1.0.0",
+    "amplify-stateless @ git+https://github.com/WHOIGit/amplify-stateless-microservice.git@v1.0.0",
     "Pillow>=11.0.0",
 ]
 
@@ -15,3 +15,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["image_format_conversion_service"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
