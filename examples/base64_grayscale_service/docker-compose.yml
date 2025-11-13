@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  base64_grayscale:
+    build:
+      context: ../..
+      dockerfile: examples/base64_grayscale_service/Dockerfile
+    ports:
+      - "8020:8020"
+    restart: unless-stopped
