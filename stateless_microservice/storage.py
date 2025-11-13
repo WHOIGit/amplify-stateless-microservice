@@ -238,5 +238,12 @@ class S3Client:
             raise
 
 
-# Global S3 client instance
-s3_client = S3Client()
+_s3_client: Optional["S3Client"] = None
+
+
+def get_s3_client() -> "S3Client":
+    """Return a lazily constructed singleton S3 client."""
+    global _s3_client
+    if _s3_client is None:
+        _s3_client = S3Client()
+    return _s3_client

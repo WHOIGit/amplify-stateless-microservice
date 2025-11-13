@@ -1,6 +1,9 @@
 # AMPLIfy Stateless Microservices
 
-This repo contains a library for quickly generating stateless microservices. It automates much of the boilerplate around REST API generation, S3 integration, and Apache web server configuration, so developers can focus on the logic behind their microservices. It includes an example image format conversion microservice.
+This repo contains a library for quickly generating stateless microservices. It automates much of the boilerplate around REST API generation, S3 integration, and Apache web server configuration, so developers can focus on the logic behind their microservices. It includes:
+
+- `examples/image_format_conversion_service`: converts S3-hosted images between formats.
+- `examples/base64_grayscale_service`: converts a base64 image payload to grayscale without using S3
 
 ## Building Stateless Services
 

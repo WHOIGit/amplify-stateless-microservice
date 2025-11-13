@@ -2,24 +2,33 @@
 
 import asyncio
 import io
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, TYPE_CHECKING
 
 from fastapi import HTTPException, Response
 
-from .storage import s3_client
+if TYPE_CHECKING:  # pragma: no cover - import only for typing
+    from .storage import S3Client
+
+
+def _get_s3_client() -> "S3Client":
+    from .storage import get_s3_client
+
+    return get_s3_client()
 
 
 def _parse_s3_uri(uri: str) -> str:
+    client = _get_s3_client()
+
     if not uri.startswith("s3://"):
         raise HTTPException(status_code=400, detail=f"Invalid S3 URI: {uri}")
     parts = uri[5:].split("/", 1)
     if len(parts) != 2:
         raise HTTPException(status_code=400, detail=f"Invalid S3 URI format: {uri}")
     bucket, key = parts
-    if bucket != s3_client.bucket:
+    if bucket != client.bucket:
         raise HTTPException(
             status_code=400,
-            detail=f"URI bucket {bucket} does not match configured bucket {s3_client.bucket}",
+            detail=f"URI bucket {bucket} does not match configured bucket {client.bucket}",
         )
     if not key:
         raise HTTPException(status_code=400, detail=f"Missing key in S3 URI: {uri}")
@@ -35,9 +44,11 @@ async def fetch_s3_bytes(uri: str) -> bytes:
 
     key = _parse_s3_uri(uri)
 
+    client = _get_s3_client()
+
     def _download() -> bytes:
         buffer = io.BytesIO()
-        s3_client.download_fileobj(key, buffer)
+        client.download_fileobj(key, buffer)
         buffer.seek(0)
         return buffer.read()
 
