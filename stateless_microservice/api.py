@@ -70,22 +70,18 @@ def create_app(processor: BaseProcessor, config: ServiceConfig | None = None) ->
 
     def make_endpoint(action: StatelessAction):
         RequestModel = action.request_model
-
+            
+        # Payload only
         async def endpoint(payload: RequestModel):
-            handler = action.handler
-            if getattr(handler, "__self__", None) is processor:
-                call_result = handler(payload)
-            else:
-                call_result = handler(processor, payload)
+            call_result = action.handler(payload)
 
-            result = call_result
-            if inspect.isawaitable(result):
-                result = await result
+            if inspect.isawaitable(call_result):
+                call_result = await call_result
             if isinstance(result, Response):
-                return result
-            if action.media_type and isinstance(result, (bytes, bytearray, memoryview)):
-                return Response(content=bytes(result), media_type=action.media_type)
-            return result
+                return call_result
+            if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
+                return Response(content=bytes(call_result), media_type=action.media_type)
+            return call_result
 
         return endpoint
 

@@ -27,7 +27,7 @@ class StatelessAction:
 
     name: str
     path: str
-    handler: Callable[["BaseProcessor", BaseModel], Awaitable[Any] | Any]
+    handler: Callable[[BaseModel], Awaitable[Any] | Any]
     request_model: type[BaseModel]
     response_model: type[BaseModel] | None = None
     methods: tuple[str, ...] = ("POST",)
