@@ -2,9 +2,10 @@
 
 import inspect
 import logging
+import re
 from dataclasses import dataclass
 
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Request, Response
 
 from .models import ErrorResponse, HealthResponse
 from .processor import BaseProcessor, StatelessAction
@@ -70,23 +71,68 @@ def create_app(processor: BaseProcessor, config: ServiceConfig | None = None) ->
 
     def make_endpoint(action: StatelessAction):
         RequestModel = action.request_model
-            
-        # Payload only
-        async def endpoint(payload: RequestModel):
-            call_result = action.handler(payload)
+        PathParamsModel = action.path_params_model
 
-            if inspect.isawaitable(call_result):
-                call_result = await call_result
-            if isinstance(result, Response):
+        if PathParamsModel: # Payload and path params
+            # Check if RequestModel has any fields
+            has_request_fields = len(RequestModel.model_fields) > 0
+
+            if has_request_fields:
+                # Normal case: RequestModel has fields (body/query params)
+                async def endpoint(request: Request, payload: RequestModel):
+                    path_params = PathParamsModel(**request.path_params)
+                    call_result = action.handler(payload, path_params)
+
+                    if inspect.isawaitable(call_result):
+                        call_result = await call_result
+                    if isinstance(call_result, Response):
+                        return call_result
+                    if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
+                        return Response(content=bytes(call_result), media_type=action.media_type)
+                    return call_result
+            else:
+                # Empty RequestModel: create instance directly, don't parse from request
+                async def endpoint(request: Request):
+                    path_params = PathParamsModel(**request.path_params)
+                    payload = RequestModel()  # Empty instance
+                    call_result = action.handler(payload, path_params)
+
+                    if inspect.isawaitable(call_result):
+                        call_result = await call_result
+                    if isinstance(call_result, Response):
+                        return call_result
+                    if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
+                        return Response(content=bytes(call_result), media_type=action.media_type)
+                    return call_result
+        else: # Payload only
+            async def endpoint(payload: RequestModel):
+                call_result = action.handler(payload)
+
+                if inspect.isawaitable(call_result):
+                    call_result = await call_result
+                if isinstance(call_result, Response):
+                    return call_result
+                if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
+                    return Response(content=bytes(call_result), media_type=action.media_type)
                 return call_result
-            if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
-                return Response(content=bytes(call_result), media_type=action.media_type)
-            return call_result
 
         return endpoint
 
     for action in actions:
         logger.info("Registering stateless action '%s' at %s", action.name, action.path)
+
+        if action.path_params_model:
+            path_param_names = set(re.findall(r'\{(\w+)\}', action.path))
+
+            model_field_names = set(action.path_params_model.model_fields.keys())
+
+            if path_param_names != model_field_names:
+                raise ValueError(
+                    f"Path parameters in '{action.path}' do not match "
+                    f"path_params_model fields for action '{action.name}'."
+                    f"Path has {path_param_names}, model has {model_field_names}"
+                )
+
         endpoint = make_endpoint(action)
 
         route_kwargs = {
