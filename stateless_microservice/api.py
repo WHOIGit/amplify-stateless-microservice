@@ -72,62 +72,59 @@ def create_app(processor: BaseProcessor, config: ServiceConfig | None = None) ->
 
     def make_endpoint(action: StatelessAction):
         PathParamsModel = action.path_params_model
-        has_request_fields = action.request_model is not None and len(action.request_model.model_fields) > 0
+        RequestModel = action.request_model
+        has_request_model = RequestModel is not None
 
-        if PathParamsModel: # Payload and path params
-            if has_request_fields:
-                # RequestModel has fields (body/query params)
-                RequestModel = action.request_model
-                async def endpoint(request: Request, payload: RequestModel):
-                    path_params = PathParamsModel(**request.path_params)
-                    call_result = action.handler(payload, path_params)
+        if PathParamsModel and has_request_model:
+            # Both request and path params
+            async def endpoint(request: Request, payload: RequestModel):
+                path_params = PathParamsModel(**request.path_params)
+                call_result = action.handler(payload, path_params)
 
-                    if inspect.isawaitable(call_result):
-                        call_result = await call_result
-                    if isinstance(call_result, Response):
-                        return call_result
-                    if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
-                        return Response(content=bytes(call_result), media_type=action.media_type)
+                if inspect.isawaitable(call_result):
+                    call_result = await call_result
+                if isinstance(call_result, Response):
                     return call_result
-            else:
-                # Empty RequestModel: only path params
-                async def endpoint(request: Request):
-                    path_params = PathParamsModel(**request.path_params)
-                    call_result = action.handler(path_params)
+                if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
+                    return Response(content=bytes(call_result), media_type=action.media_type)
+                return call_result
+        elif PathParamsModel:
+            # Only path params
+            async def endpoint(request: Request):
+                path_params = PathParamsModel(**request.path_params)
+                call_result = action.handler(path_params)
 
-                    if inspect.isawaitable(call_result):
-                        call_result = await call_result
-                    if isinstance(call_result, Response):
-                        return call_result
-                    if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
-                        return Response(content=bytes(call_result), media_type=action.media_type)
+                if inspect.isawaitable(call_result):
+                    call_result = await call_result
+                if isinstance(call_result, Response):
                     return call_result
-        else: # No path params
-            if has_request_fields:
-                # Has request body/query params
-                RequestModel = action.request_model
-                async def endpoint(payload: RequestModel):
-                    call_result = action.handler(payload)
+                if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
+                    return Response(content=bytes(call_result), media_type=action.media_type)
+                return call_result
+        elif has_request_model:
+            # Only request model
+            async def endpoint(payload: RequestModel):
+                call_result = action.handler(payload)
 
-                    if inspect.isawaitable(call_result):
-                        call_result = await call_result
-                    if isinstance(call_result, Response):
-                        return call_result
-                    if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
-                        return Response(content=bytes(call_result), media_type=action.media_type)
+                if inspect.isawaitable(call_result):
+                    call_result = await call_result
+                if isinstance(call_result, Response):
                     return call_result
-            else:
-                # No request body or path params - handler takes no arguments
-                async def endpoint():
-                    call_result = action.handler()
+                if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
+                    return Response(content=bytes(call_result), media_type=action.media_type)
+                return call_result
+        else:
+            # No request or path params
+            async def endpoint():
+                call_result = action.handler()
 
-                    if inspect.isawaitable(call_result):
-                        call_result = await call_result
-                    if isinstance(call_result, Response):
-                        return call_result
-                    if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
-                        return Response(content=bytes(call_result), media_type=action.media_type)
+                if inspect.isawaitable(call_result):
+                    call_result = await call_result
+                if isinstance(call_result, Response):
                     return call_result
+                if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
+                    return Response(content=bytes(call_result), media_type=action.media_type)
+                return call_result
 
         return endpoint
 
