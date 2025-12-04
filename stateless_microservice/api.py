@@ -6,6 +6,7 @@ import re
 from dataclasses import dataclass
 
 from fastapi import FastAPI, HTTPException, Request, Response
+from pydantic import BaseModel
 
 from .models import ErrorResponse, HealthResponse
 from .processor import BaseProcessor, StatelessAction
@@ -70,43 +71,52 @@ def create_app(processor: BaseProcessor, config: ServiceConfig | None = None) ->
         )
 
     def make_endpoint(action: StatelessAction):
-        RequestModel = action.request_model
         PathParamsModel = action.path_params_model
+        RequestModel = action.request_model
+        has_request_model = RequestModel is not None
 
-        if PathParamsModel: # Payload and path params
-            # Check if RequestModel has any fields
-            has_request_fields = len(RequestModel.model_fields) > 0
+        if PathParamsModel and has_request_model:
+            # Both request and path params
+            async def endpoint(request: Request, payload: RequestModel):
+                path_params = PathParamsModel(**request.path_params)
+                call_result = action.handler(payload, path_params)
 
-            if has_request_fields:
-                # RequestModel has fields (body/query params)
-                async def endpoint(request: Request, payload: RequestModel):
-                    path_params = PathParamsModel(**request.path_params)
-                    call_result = action.handler(payload, path_params)
-
-                    if inspect.isawaitable(call_result):
-                        call_result = await call_result
-                    if isinstance(call_result, Response):
-                        return call_result
-                    if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
-                        return Response(content=bytes(call_result), media_type=action.media_type)
+                if inspect.isawaitable(call_result):
+                    call_result = await call_result
+                if isinstance(call_result, Response):
                     return call_result
-            else:
-                # Empty RequestModel: create empty instance directly, don't parse from request
-                async def endpoint(request: Request):
-                    path_params = PathParamsModel(**request.path_params)
-                    payload = RequestModel()  # Empty instance
-                    call_result = action.handler(payload, path_params)
+                if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
+                    return Response(content=bytes(call_result), media_type=action.media_type)
+                return call_result
+        elif PathParamsModel:
+            # Only path params
+            async def endpoint(request: Request):
+                path_params = PathParamsModel(**request.path_params)
+                call_result = action.handler(path_params)
 
-                    if inspect.isawaitable(call_result):
-                        call_result = await call_result
-                    if isinstance(call_result, Response):
-                        return call_result
-                    if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
-                        return Response(content=bytes(call_result), media_type=action.media_type)
+                if inspect.isawaitable(call_result):
+                    call_result = await call_result
+                if isinstance(call_result, Response):
                     return call_result
-        else: # Payload only
+                if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
+                    return Response(content=bytes(call_result), media_type=action.media_type)
+                return call_result
+        elif has_request_model:
+            # Only request model
             async def endpoint(payload: RequestModel):
                 call_result = action.handler(payload)
+
+                if inspect.isawaitable(call_result):
+                    call_result = await call_result
+                if isinstance(call_result, Response):
+                    return call_result
+                if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
+                    return Response(content=bytes(call_result), media_type=action.media_type)
+                return call_result
+        else:
+            # No request or path params
+            async def endpoint():
+                call_result = action.handler()
 
                 if inspect.isawaitable(call_result):
                     call_result = await call_result

@@ -16,7 +16,7 @@ class StatelessAction:
         name: Short identifier used for logging and OpenAPI docs.
         path: FastAPI route path (e.g., "/transform").
         handler: Callable invoked with the processor instance and validated payload.
-        request_model: Pydantic model for request validation.
+        request_model: Optional Pydantic model for request validation (defaults to empty model).
         response_model: Optional Pydantic model for response serialization.
         methods: HTTP methods to expose (defaults to POST).
         path_params_model: Optional Pydantic model for path parameter validation.
@@ -29,7 +29,7 @@ class StatelessAction:
     name: str
     path: str
     handler: Callable[[BaseModel], Awaitable[Any] | Any]
-    request_model: type[BaseModel]
+    request_model: type[BaseModel] | None = None
     response_model: type[BaseModel] | None = None
     methods: tuple[str, ...] = ("POST",)
     path_params_model: type[BaseModel] | None = None
