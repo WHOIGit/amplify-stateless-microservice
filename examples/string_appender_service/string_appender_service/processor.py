@@ -44,7 +44,7 @@ class StringAppenderProcessor(BaseProcessor):
             ),
         ]
 
-    async def handle_append(self, request: BaseModel, path_params: AppendPathParams) -> AppendResponse:
+    async def handle_append(self, path_params: AppendPathParams) -> AppendResponse:
         """Append the two path parameters and return the result."""
         result = path_params.first + path_params.second
         return AppendResponse(result=result)
