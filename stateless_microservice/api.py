@@ -6,11 +6,17 @@ import re
 from dataclasses import dataclass
 
 from fastapi import FastAPI, HTTPException, Request, Response
+from pydantic import BaseModel
 
 from .models import ErrorResponse, HealthResponse
 from .processor import BaseProcessor, StatelessAction
 
 logger = logging.getLogger(__name__)
+
+
+class EmptyRequestModel(BaseModel):
+    """ Empty request model, used when no request model specified. """
+    pass
 
 
 @dataclass
@@ -70,7 +76,11 @@ def create_app(processor: BaseProcessor, config: ServiceConfig | None = None) ->
         )
 
     def make_endpoint(action: StatelessAction):
-        RequestModel = action.request_model
+        # Create empty model if no request_model provided
+        if action.request_model is None:
+            RequestModel = EmptyRequestModel
+        else:
+            RequestModel = action.request_model
         PathParamsModel = action.path_params_model
 
         if PathParamsModel: # Payload and path params

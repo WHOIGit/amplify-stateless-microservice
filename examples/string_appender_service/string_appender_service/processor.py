@@ -14,12 +14,6 @@ class AppendPathParams(BaseModel):
     second: str = Field(..., description="Second string to append.")
 
 
-class AppendRequest(BaseModel):
-    """Request body (empty for this example)."""
-
-    pass
-
-
 class AppendResponse(BaseModel):
     """Response with the appended strings."""
 
@@ -38,7 +32,6 @@ class StringAppenderProcessor(BaseProcessor):
             StatelessAction(
                 name="append_strings",
                 path="/append/{first}/{second}",
-                request_model=AppendRequest,
                 path_params_model=AppendPathParams,
                 response_model=AppendResponse,
                 handler=self.handle_append,
@@ -51,9 +44,7 @@ class StringAppenderProcessor(BaseProcessor):
             ),
         ]
 
-    async def handle_append(
-        self, request: AppendRequest, path_params: AppendPathParams
-    ) -> AppendResponse:
+    async def handle_append(self, request, path_params: AppendPathParams) -> AppendResponse:
         """Append the two path parameters and return the result."""
         result = path_params.first + path_params.second
         return AppendResponse(result=result)
