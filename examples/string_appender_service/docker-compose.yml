@@ -1,0 +1,7 @@
+services:
+  string_appender:
+    build:
+      context: ../..
+      dockerfile: examples/string_appender_service/Dockerfile
+    ports:
+      - "8030:8030"

@@ -19,6 +19,7 @@ class StatelessAction:
         request_model: Pydantic model for request validation.
         response_model: Optional Pydantic model for response serialization.
         methods: HTTP methods to expose (defaults to POST).
+        path_params_model: Optional Pydantic model for path parameter validation.
         summary: Optional OpenAPI summary.
         description: Optional longer description.
         tags: Optional OpenAPI tags.
@@ -27,10 +28,11 @@ class StatelessAction:
 
     name: str
     path: str
-    handler: Callable[["BaseProcessor", BaseModel], Awaitable[Any] | Any]
+    handler: Callable[[BaseModel], Awaitable[Any] | Any]
     request_model: type[BaseModel]
     response_model: type[BaseModel] | None = None
     methods: tuple[str, ...] = ("POST",)
+    path_params_model: type[BaseModel] | None = None
     summary: str | None = None
     description: str | None = None
     tags: tuple[str, ...] | None = None

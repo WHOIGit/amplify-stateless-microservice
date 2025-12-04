@@ -38,6 +38,42 @@ This repo contains a library for quickly generating stateless microservices. It 
             # Implement the stateless logic here.
             return {"echo": request.payload}
     ```
+
+    **With path parameters:**
+    ```python
+    class PathParams(BaseModel):
+        user_id: str
+
+    StatelessAction(
+        name="get_user",
+        path="/users/{user_id}",
+        request_model=MyRequest,
+        path_params_model=PathParams,  # Path parameters
+        handler=self.handle_get_user,
+    )
+
+    async def handle_get_user(self, request: MyRequest, path_params: PathParams):
+        return {"user_id": path_params.user_id, "data": request.payload}
+    ```
+
+    **With custom response model:**
+    ```python
+    class MyResponse(BaseModel):
+        result: str
+        count: int
+
+    StatelessAction(
+        name="my_action",
+        path="/action-name",
+        request_model=MyRequest,
+        response_model=MyResponse,  # Custom response
+        handler=self.handle_my_action,
+    )
+
+    async def handle_my_action(self, request: MyRequest) -> MyResponse:
+        return MyResponse(result=request.payload, count=len(request.payload))
+    ```
+
 2. Instantiate the API with `stateless_microservice.create_app(processor, ServiceConfig(...))`.
 
     ```python
