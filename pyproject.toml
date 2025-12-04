@@ -1,6 +1,6 @@
 [project]
 name = "amplify-stateless"
-version = "1.0.0"
+version = "1.2.1"
 description = "Microservice library for building stateless microservices"
 readme = "README.md"
 requires-python = ">=3.12"
