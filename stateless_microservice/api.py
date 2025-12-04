@@ -14,11 +14,6 @@ from .processor import BaseProcessor, StatelessAction
 logger = logging.getLogger(__name__)
 
 
-class EmptyRequestModel(BaseModel):
-    """ Empty request model, used when no request model specified. """
-    pass
-
-
 @dataclass
 class ServiceConfig:
     """
@@ -76,19 +71,13 @@ def create_app(processor: BaseProcessor, config: ServiceConfig | None = None) ->
         )
 
     def make_endpoint(action: StatelessAction):
-        # Create empty model if no request_model provided
-        if action.request_model is None:
-            RequestModel = EmptyRequestModel
-        else:
-            RequestModel = action.request_model
         PathParamsModel = action.path_params_model
+        has_request_fields = action.request_model is not None and len(action.request_model.model_fields) > 0
 
         if PathParamsModel: # Payload and path params
-            # Check if RequestModel has any fields
-            has_request_fields = len(RequestModel.model_fields) > 0
-
             if has_request_fields:
                 # RequestModel has fields (body/query params)
+                RequestModel = action.request_model
                 async def endpoint(request: Request, payload: RequestModel):
                     path_params = PathParamsModel(**request.path_params)
                     call_result = action.handler(payload, path_params)
@@ -114,10 +103,9 @@ def create_app(processor: BaseProcessor, config: ServiceConfig | None = None) ->
                         return Response(content=bytes(call_result), media_type=action.media_type)
                     return call_result
         else: # No path params
-            has_request_fields = len(RequestModel.model_fields) > 0
-
             if has_request_fields:
                 # Has request body/query params
+                RequestModel = action.request_model
                 async def endpoint(payload: RequestModel):
                     call_result = action.handler(payload)
 
