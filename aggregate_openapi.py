@@ -5,20 +5,16 @@ Usage:
   # Start the docs server at root path
   python aggregate_openapi.py http://hostname/service1 http://hostname/service2
 
-  # Start the docs server at a subpath (e.g., for /docs prefix)
-  python aggregate_openapi.py http://hostname/service1 http://hostname/service2 --path /docs
+  # Start the docs server at a subpath (e.g., for /api-docs prefix)
+  python aggregate_openapi.py http://hostname/service1 http://hostname/service2 --path /api-docs
 
-  # Generate Apache reverse-proxy config
+  # Generate Apache config (to stdout) and start server
   python aggregate_openapi.py http://hostname/service1 http://hostname/service2 \
     --apache-config --hostname api-docs.example.com
 
-  # Generate Apache config for a subdirectory path (run server with --path /docs)
+  # Generate Apache config to file and start server
   python aggregate_openapi.py http://hostname/service1 http://hostname/service2 \
-    --apache-config --hostname example.com --path /docs
-
-  # Generate Apache config fragment (no VirtualHost wrapper)
-  python aggregate_openapi.py http://hostname/service1 http://hostname/service2 \
-    --apache-config --hostname example.com --no-virtualhost
+    --path /api-docs --apache-config --hostname example.com --output api-docs.conf
 """
 
 import argparse
@@ -137,7 +133,7 @@ def main():
     apache_group.add_argument(
         "--apache-config",
         action="store_true",
-        help="Generate Apache reverse-proxy config and exit (does not start server)"
+        help="Generate Apache reverse-proxy config before starting server"
     )
     apache_group.add_argument(
         "--hostname",
@@ -199,14 +195,16 @@ def main():
         config_text = generate_apache_vhost_config(params)
 
         if args.output == "-":
+            print("\n" + "="*60)
+            print("Apache Configuration:")
+            print("="*60)
             print(config_text)
+            print("="*60 + "\n")
         else:
             output_path = Path(args.output)
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(config_text + "\n")
-            print(f"Wrote Apache config to {output_path}")
-
-        return
+            print(f"Wrote Apache config to {output_path}\n")
 
     aggregated = aggregate_specs(args.urls)
 
