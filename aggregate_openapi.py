@@ -54,8 +54,26 @@ def aggregate_specs(service_urls: list[str]) -> dict:
             "description": "API documentation for multiple microservices"
         },
         "paths": {},
-        "components": {"schemas": {}},
+        "components": {},
     }
+
+    # OpenAPI 3.1.0 component types
+    component_types = [
+        "schemas",
+        "responses",
+        "parameters",
+        "examples",
+        "requestBodies",
+        "headers",
+        "securitySchemes",
+        "links",
+        "callbacks",
+        "pathItems"
+    ]
+
+    # Initialize all component sections
+    for component_type in component_types:
+        aggregated["components"][component_type] = {}
 
     for url in service_urls:
         spec = fetch_openapi_spec(url)
@@ -70,17 +88,21 @@ def aggregate_specs(service_urls: list[str]) -> dict:
             prefixed_path = f"/{service_name}{path}"
             aggregated["paths"][prefixed_path] = methods
 
-        # Merge component schemas
-        if "components" in spec and "schemas" in spec["components"]:
-            for schema_name, schema_def in spec["components"]["schemas"].items():
-                if schema_name in aggregated["components"]["schemas"]:
-                    # Skip known shared models from stateless_microservice
-                    if schema_name in SHARED_MODELS:
-                        continue
-                    raise RuntimeError(
-                        f"Schema naming conflict: '{schema_name}' exists in multiple services"
-                    )
-                aggregated["components"]["schemas"][schema_name] = schema_def
+        # Merge all component sections
+        if "components" in spec:
+            for component_type in component_types:
+                if component_type not in spec["components"]:
+                    continue
+
+                for item_name, item_def in spec["components"][component_type].items():
+                    if item_name in aggregated["components"][component_type]:
+                        # Skip known shared models from stateless_microservice (schemas only)
+                        if component_type == "schemas" and item_name in SHARED_MODELS:
+                            continue
+                        raise RuntimeError(
+                            f"{component_type} naming conflict: '{item_name}' exists in multiple services"
+                        )
+                    aggregated["components"][component_type][item_name] = item_def
 
     return aggregated
 
