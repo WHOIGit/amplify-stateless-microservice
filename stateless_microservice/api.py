@@ -6,7 +6,8 @@ import re
 from dataclasses import dataclass
 
 from fastapi import FastAPI, HTTPException, Request, Response
-from pydantic import BaseModel
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, ValidationError
 
 from .models import ErrorResponse, HealthResponse
 from .processor import BaseProcessor, StatelessAction
@@ -54,6 +55,14 @@ def create_app(processor: BaseProcessor, config: ServiceConfig | None = None) ->
 
     app.state.processor = processor
     app.state.service_config = config
+
+    @app.exception_handler(ValidationError)
+    async def validation_exception_handler(request: Request, exc: ValidationError):
+        """Handle Pydantic validation errors (e.g., path parameter validation)."""
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Validation error", "detail": str(exc)},
+        )
 
     @app.get("/", response_model=HealthResponse)
     async def root():
