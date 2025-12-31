@@ -161,28 +161,3 @@ class AuthClient:
     async def close(self):
         """Close the HTTP client."""
         await self._client.aclose()
-
-
-def create_auth_dependency(required_scopes: list[str] | None = None):
-    """
-    Helper to create auth dependency without instantiating AuthClient directly.
-
-    This is useful when you want to use environment-based configuration.
-
-    Usage:
-        from fastapi import Depends
-
-        # In your config
-        AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://auth-service:8000")
-
-        # In your app
-        require_auth = create_auth_dependency(["read", "write"])
-
-        @app.get("/protected")
-        async def protected(token_info = Depends(require_auth)):
-            return {"user": token_info.name}
-    """
-    import os
-    auth_url = os.getenv("AUTH_SERVICE_URL", "http://localhost:8000")
-    auth_client = AuthClient(auth_url)
-    return auth_client.require_scopes(required_scopes)
