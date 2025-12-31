@@ -1,0 +1,76 @@
+services:
+  # ============================================
+  # AUTH INFRASTRUCTURE (Optional - use --profile auth)
+  # ============================================
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: amplify-postgres
+    profiles: ["auth"]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-auth_db}
+      POSTGRES_USER: ${POSTGRES_USER:-auth_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-auth_pass}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - amplify-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-auth_user} -d ${POSTGRES_DB:-auth_db} && psql -U ${POSTGRES_USER:-auth_user} -d ${POSTGRES_DB:-auth_db} -tAc \"SELECT 1 FROM information_schema.tables WHERE table_name = 'tokens'\" | grep -q 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: amplify-redis
+    profiles: ["auth"]
+    command: redis-server --maxmemory 2gb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - amplify-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: amplify-auth-service
+    profiles: ["auth"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-auth_user}:${POSTGRES_PASSWORD:-auth_pass}@postgres:5432/${POSTGRES_DB:-auth_db}
+      REDIS_URL: redis://redis:6379/0
+      TOKEN_CACHE_TTL: 1800
+      PORT: ${AUTH_SERVICE_PORT:-8000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${AUTH_SERVICE_PORT:-8000}:${AUTH_SERVICE_PORT:-8000}"
+    networks:
+      - amplify-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:$${PORT:-8000}/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  amplify-net:
+    driver: bridge
