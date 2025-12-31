@@ -25,7 +25,7 @@ services:
       retries: 10
 
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     container_name: amplify-redis
     profiles: ["auth"]
     command: redis-server --maxmemory 2gb --maxmemory-policy allkeys-lru
