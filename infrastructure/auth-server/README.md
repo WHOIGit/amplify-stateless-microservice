@@ -9,7 +9,7 @@ Token-based authentication service for AMPLIfy microservices.
 - **Command Queue** - Single-threaded write operations
 - **FastAPI** - HTTP API for validation and management
 
-## Quick Start
+## Usage
 
 ### 1. Start the auth infrastructure
 
@@ -18,7 +18,7 @@ cd infrastructure/auth-server
 docker-compose --profile auth up -d
 ```
 
-### 2. Create tokens
+### 2. Token management via CLI
 
 ```bash
 # Create a read-only token
@@ -55,7 +55,7 @@ StatelessAction(
 
 ## CLI Usage
 
-Run the CLI from inside the container:
+Run the CLI via docker compose exec:
 
 ```bash
 docker-compose exec auth-service amplify-auth-cli create mytoken --scopes read write
@@ -69,7 +69,7 @@ docker-compose exec auth-service amplify-auth-cli create mytoken --scopes read w
 
 ## API Endpoints
 
-### Validation (High-frequency, read-only)
+### Validation (read-only for token-state)
 
 **POST /auth/validate**
 ```json
@@ -89,38 +89,17 @@ Response:
 }
 ```
 
-### Management (Low-frequency, via command queue)
+### Management (via command queue)
 
 **POST /auth/tokens** - Create token
+
 **GET /auth/tokens** - List tokens
+
 **GET /auth/tokens/{id}** - Get token info
+
 **POST /auth/tokens/{id}/revoke** - Revoke token
 
 See auto-generated docs at http://localhost:8000/docs
-
-## Race Condition Prevention
-
-This auth service uses the **Single-Writer Pattern**:
-
-1. All **write operations** (create, revoke, extend) go through a **single-threaded command queue**
-2. All **read operations** (validate) are massively concurrent and read-only
-3. **No race conditions** because only one thread modifies state at a time
-
-### How it works:
-
-```
-Write Operations:          Read Operations:
-
-API → Command Queue       API → Redis Cache → Response
-       ↓                         ↓ (miss)
-  Single Writer           PostgreSQL → Response
-       ↓
-  PostgreSQL
-       ↓
-  Redis Cache
-       ↓
-  Response
-```
 
 ## Token Format
 
@@ -130,7 +109,7 @@ Tokens have the prefix `amp_live_` followed by 43 URL-safe characters:
 amp_live_k7n2m9p4q8r1s5t3u6v0w7x2y9z4a1b3c5d7e9f2g4h6j8
 ```
 
-Only the **SHA256 hash** is stored in the database (never the raw token).
+Only the **SHA256 hash** is stored in the database -- never the raw token.
 
 ## Scopes
 
@@ -140,51 +119,20 @@ Common scopes:
 - `delete` - Delete access
 - `admin` - Administrative access
 
-Define your own scopes as needed - they're just strings!
+You may define your own scopes as needed. Each scope is represented by a string.
 
 ## Configuration
 
-Environment variables (`.env` or docker-compose):
+Available environment variables for docker-compose (`.env` file):
 
 ```bash
-DATABASE_URL=postgresql://auth_user:auth_pass@postgres:5432/auth_db
-REDIS_URL=redis://redis:6379/0
-TOKEN_CACHE_TTL=1800  # 30 minutes (cache duration)
-PORT=8000             # Auth service port (default: 8000)
+AUTH_SERVICE_PORT=8001  # Port that the auth API will be available on (default: 8000)
+POSTGRES_PORT=5433      # PostgreSQL host port (default: 5432)
+POSTGRES_DB=my_auth_db  # Database name (default: auth_db)
+POSTGRES_USER=my_user   # Database user (default: auth_user)
+POSTGRES_PASSWORD=my_pass  # Database password (default: auth_pass)
+REDIS_PORT=6379         # Redis host port (default: 6379)
 ```
-
-To change ports and database credentials in docker-compose:
-
-```bash
-cd infrastructure/auth-server
-
-# Set via environment variables
-AUTH_SERVICE_PORT=8001 \
-POSTGRES_PORT=5433 \
-POSTGRES_DB=my_auth_db \
-POSTGRES_USER=my_user \
-POSTGRES_PASSWORD=my_pass \
-docker-compose --profile auth up -d
-
-# Or create a .env file in auth-service/
-cat > .env <<EOF
-AUTH_SERVICE_PORT=8001
-POSTGRES_PORT=5433
-POSTGRES_DB=my_auth_db
-POSTGRES_USER=my_user
-POSTGRES_PASSWORD=my_pass
-REDIS_PORT=6379
-EOF
-docker-compose --profile auth up -d
-```
-
-Available docker-compose environment variables:
-- `AUTH_SERVICE_PORT` - Auth service port (default: 8000)
-- `POSTGRES_PORT` - PostgreSQL host port (default: 5432)
-- `POSTGRES_DB` - Database name (default: auth_db)
-- `POSTGRES_USER` - Database user (default: auth_user)
-- `POSTGRES_PASSWORD` - Database password (default: auth_pass)
-- `REDIS_PORT` - Redis host port (default: 6379)
 
 ## Security Notes
 
@@ -209,24 +157,4 @@ Returns:
     "command_processor": "running"
   }
 }
-```
-
-## Running Example Services
-
-### Example: Authenticated Service
-
-To run the authenticated service example against the auth infrastructure:
-
-```bash
-# 1. Make sure auth infrastructure is running
-cd infrastructure/auth-server
-docker-compose --profile auth up -d
-
-# 2. Build and run the authenticated service
-cd ../../examples/authenticated_service
-docker build -t authenticated-service .
-docker run -p 8002:8000 \
-  --network auth-server_amplify-net \
-  -e AUTH_SERVICE_URL=http://auth-service:8000 \
-  authenticated-service
 ```
