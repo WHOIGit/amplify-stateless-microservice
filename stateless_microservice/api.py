@@ -5,7 +5,7 @@ import logging
 import re
 from dataclasses import dataclass
 
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
 
@@ -31,9 +31,18 @@ class ServiceConfig:
     description: str | None = None
 
 
-def create_app(processor: BaseProcessor, config: ServiceConfig | None = None) -> FastAPI:
+def create_app(
+    processor: BaseProcessor,
+    config: ServiceConfig | None = None,
+    auth_client=None
+) -> FastAPI:
     """
     Create a FastAPI application for a stateless processor.
+
+    Args:
+        processor: The processor instance implementing business logic
+        config: Optional service configuration
+        auth_client: Optional AuthClient for token-based authentication
     """
 
     config = config or ServiceConfig()
@@ -83,12 +92,46 @@ def create_app(processor: BaseProcessor, config: ServiceConfig | None = None) ->
         PathParamsModel = action.path_params_model
         RequestModel = action.request_model
         has_request_model = RequestModel is not None
+        requires_auth = action.required_scopes and auth_client
 
-        if PathParamsModel and has_request_model:
+        if PathParamsModel and has_request_model and requires_auth:
+            # Both request, path params, and auth
+            async def endpoint(
+                request: Request,
+                payload: RequestModel,
+                token_info=Depends(auth_client.require_scopes(action.required_scopes))
+            ):
+                path_params = PathParamsModel(**request.path_params)
+                call_result = action.handler(payload, path_params, token_info)
+
+                if inspect.isawaitable(call_result):
+                    call_result = await call_result
+                if isinstance(call_result, Response):
+                    return call_result
+                if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
+                    return Response(content=bytes(call_result), media_type=action.media_type)
+                return call_result
+        elif PathParamsModel and has_request_model:
             # Both request and path params
             async def endpoint(request: Request, payload: RequestModel):
                 path_params = PathParamsModel(**request.path_params)
                 call_result = action.handler(payload, path_params)
+
+                if inspect.isawaitable(call_result):
+                    call_result = await call_result
+                if isinstance(call_result, Response):
+                    return call_result
+                if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
+                    return Response(content=bytes(call_result), media_type=action.media_type)
+                return call_result
+        elif PathParamsModel and requires_auth:
+            # Path params and auth
+            async def endpoint(
+                request: Request,
+                token_info=Depends(auth_client.require_scopes(action.required_scopes))
+            ):
+                path_params = PathParamsModel(**request.path_params)
+                call_result = action.handler(path_params, token_info)
 
                 if inspect.isawaitable(call_result):
                     call_result = await call_result
@@ -110,10 +153,37 @@ def create_app(processor: BaseProcessor, config: ServiceConfig | None = None) ->
                 if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
                     return Response(content=bytes(call_result), media_type=action.media_type)
                 return call_result
+        elif has_request_model and requires_auth:
+            # Request model and auth
+            async def endpoint(
+                payload: RequestModel,
+                token_info=Depends(auth_client.require_scopes(action.required_scopes))
+            ):
+                call_result = action.handler(payload, token_info)
+
+                if inspect.isawaitable(call_result):
+                    call_result = await call_result
+                if isinstance(call_result, Response):
+                    return call_result
+                if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
+                    return Response(content=bytes(call_result), media_type=action.media_type)
+                return call_result
         elif has_request_model:
             # Only request model
             async def endpoint(payload: RequestModel):
                 call_result = action.handler(payload)
+
+                if inspect.isawaitable(call_result):
+                    call_result = await call_result
+                if isinstance(call_result, Response):
+                    return call_result
+                if action.media_type and isinstance(call_result, (bytes, bytearray, memoryview)):
+                    return Response(content=bytes(call_result), media_type=action.media_type)
+                return call_result
+        elif requires_auth:
+            # Only auth
+            async def endpoint(token_info=Depends(auth_client.require_scopes(action.required_scopes))):
+                call_result = action.handler(token_info)
 
                 if inspect.isawaitable(call_result):
                     call_result = await call_result

@@ -5,15 +5,15 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 
-# Copy application code and dependencies
+# Copy library code
 COPY pyproject.toml README.md ./
-COPY auth_service ./auth_service
+COPY stateless_microservice ./stateless_microservice
 
-# Install package
-RUN pip install --no-cache-dir .
+# Install package with auth-server extras
+RUN pip install --no-cache-dir .[auth-server]
 
 # Expose port
 EXPOSE 8000
 
-# Run the application
-CMD ["python", "-m", "auth_service.main"]
+# Run the auth server
+CMD ["amplify-auth-server"]

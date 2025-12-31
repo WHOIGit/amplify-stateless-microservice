@@ -43,8 +43,8 @@ services:
 
   auth-service:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: infrastructure/auth-server/Dockerfile
     container_name: amplify-auth-service
     profiles: ["auth"]
     environment:

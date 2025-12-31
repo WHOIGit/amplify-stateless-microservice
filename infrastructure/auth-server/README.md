@@ -14,7 +14,7 @@ Token-based authentication service for AMPLIfy microservices.
 ### 1. Start the auth infrastructure
 
 ```bash
-cd auth-service
+cd infrastructure/auth-server
 docker-compose --profile auth up -d
 ```
 
@@ -22,21 +22,21 @@ docker-compose --profile auth up -d
 
 ```bash
 # Create a read-only token
-docker-compose exec auth-service auth-cli \
+docker-compose exec auth-service amplify-auth-cli \
   create readonly-token --scopes read --ttl 365
 
 # Create a full-access token
-docker-compose exec auth-service auth-cli \
+docker-compose exec auth-service amplify-auth-cli \
   create admin-token --scopes read write delete admin
 
 # List all tokens
-docker-compose exec auth-service auth-cli list
+docker-compose exec auth-service amplify-auth-cli list
 
 # Get token details
-docker-compose exec auth-service auth-cli info <token_id>
+docker-compose exec auth-service amplify-auth-cli info <token_id>
 
 # Revoke a token
-docker-compose exec auth-service auth-cli revoke <token_id>
+docker-compose exec auth-service amplify-auth-cli revoke <token_id>
 ```
 
 ### 3. Use tokens in your services
@@ -59,13 +59,13 @@ The CLI can be run from:
 
 **Inside the container:**
 ```bash
-docker-compose exec auth-service auth-cli create mytoken --scopes read write
+docker-compose exec auth-service amplify-auth-cli create mytoken --scopes read write
 ```
 
 **From your local machine:**
 ```bash
-pip install -e /path/to/auth-service
-auth-cli --auth-url http://localhost:8000 create mytoken --scopes read write
+pip install amplify-stateless[auth-server]
+amplify-auth-cli --auth-url http://localhost:8000 create mytoken --scopes read write
 ```
 
 **Commands:**
@@ -163,7 +163,7 @@ PORT=8000             # Auth service port (default: 8000)
 To change ports and database credentials in docker-compose:
 
 ```bash
-cd auth-service
+cd infrastructure/auth-server
 
 # Set via environment variables
 AUTH_SERVICE_PORT=8001 \
@@ -226,14 +226,14 @@ To run the authenticated service example against the auth infrastructure:
 
 ```bash
 # 1. Make sure auth infrastructure is running
-cd auth-service
+cd infrastructure/auth-server
 docker-compose --profile auth up -d
 
 # 2. Build and run the authenticated service
-cd ../examples/authenticated_service
+cd ../../examples/authenticated_service
 docker build -t authenticated-service .
 docker run -p 8002:8000 \
-  --network auth-service_amplify-net \
+  --network auth-server_amplify-net \
   -e AUTH_SERVICE_URL=http://auth-service:8000 \
   authenticated-service
 ```

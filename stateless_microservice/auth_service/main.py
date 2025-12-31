@@ -5,11 +5,17 @@ import uvicorn
 from .api import app
 from .config import settings
 
-if __name__ == "__main__":
+
+def main():
+    """Run the auth service."""
     uvicorn.run(
-        "auth_service.api:app",
+        "stateless_microservice.auth_service.api:app",
         host="0.0.0.0",
         port=settings.port,
         reload=False,
         log_level="info"
     )
+
+
+if __name__ == "__main__":
+    main()
