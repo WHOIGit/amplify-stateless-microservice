@@ -9,7 +9,7 @@ This example demonstrates an AMPLIfy microservice with token authentication.
 ```bash
 # From repo root
 cd infrastructure/auth-server
-docker-compose --profile auth up -d
+docker-compose up -d
 ```
 
 This starts:

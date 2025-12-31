@@ -15,7 +15,7 @@ Token-based authentication service for AMPLIfy microservices.
 
 ```bash
 cd infrastructure/auth-server
-docker-compose --profile auth up -d
+docker-compose up -d
 ```
 
 ### 2. Token management via CLI
