@@ -55,17 +55,10 @@ StatelessAction(
 
 ## CLI Usage
 
-The CLI can be run from:
+Run the CLI from inside the container:
 
-**Inside the container:**
 ```bash
 docker-compose exec auth-service amplify-auth-cli create mytoken --scopes read write
-```
-
-**From your local machine:**
-```bash
-pip install amplify-stateless[auth-server]
-amplify-auth-cli --auth-url http://localhost:8000 create mytoken --scopes read write
 ```
 
 **Commands:**

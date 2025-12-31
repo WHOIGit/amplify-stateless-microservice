@@ -6,8 +6,6 @@ This shows how to integrate auth with your microservice.
 
 import os
 
-import uvicorn
-
 from stateless_microservice import create_app, ServiceConfig, AuthClient
 from .processor import Processor
 
@@ -32,12 +30,3 @@ app = create_app(
 
 # Store service name for audit logging
 app.state.service_name = processor.name
-
-
-if __name__ == "__main__":
-    uvicorn.run(
-        "authenticated_service.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True
-    )

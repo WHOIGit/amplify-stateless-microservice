@@ -15,4 +15,4 @@ COPY examples/authenticated_service .
 EXPOSE 8000
 
 # Run the service
-CMD ["python", "-m", "authenticated_service.main"]
+CMD ["uvicorn", "authenticated_service.main:app", "--host", "0.0.0.0", "--port", "8000"]
