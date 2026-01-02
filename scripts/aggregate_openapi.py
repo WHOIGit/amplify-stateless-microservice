@@ -1,19 +1,22 @@
 """
 Aggregate OpenAPI specs from multiple microservices and serve them.
 
+IMPORTANT: Service URLs must use the same public hostname to enable "Try it out"
+functionality in Swagger UI/ReDoc.
+
 Usage:
-  # Start the docs server at root path
-  python aggregate_openapi.py http://hostname/service1 http://hostname/service2
+  # Start the docs server - use the public hostname, not localhost
+  python aggregate_openapi.py https://hostname/service1 https://hostname/service2
 
   # Start the docs server at a subpath (e.g., for /api-docs prefix)
-  python aggregate_openapi.py http://hostname/service1 http://hostname/service2 --path /api-docs
+  python aggregate_openapi.py https://hostname/service1 https://hostname/service2 --path /api-docs
 
   # Generate Apache config (to stdout) and start server
-  python aggregate_openapi.py http://hostname/service1 http://hostname/service2 \
+  python aggregate_openapi.py https://hostname/service1 https://hostname/service2 \
     --apache-config --hostname api-docs.example.com
 
   # Generate Apache config to file and start server
-  python aggregate_openapi.py http://hostname/service1 http://hostname/service2 \
+  python aggregate_openapi.py https://hostname/service1 https://hostname/service2 \
     --path /api-docs --apache-config --hostname example.com --output api-docs.conf
 """
 
