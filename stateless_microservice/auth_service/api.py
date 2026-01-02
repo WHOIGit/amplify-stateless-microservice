@@ -137,7 +137,7 @@ async def _warm_cache():
                 "scopes": ",".join(token["scopes"]) if token["scopes"] else "",
                 "expires_at": token["expires_at"].isoformat() if token["expires_at"] else "",
                 "revoked": "0",
-                "metadata": token["metadata"] or "{}"
+                "metadata": json.dumps(token["metadata"]) if token["metadata"] else "{}"
             }
         )
         await redis_client.expire(f"token:{token['token_hash']}", settings.token_cache_ttl)
@@ -253,7 +253,7 @@ async def validate_token(request: ValidateTokenRequest):
             "scopes": ",".join(token_data["scopes"]) if token_data["scopes"] else "",
             "expires_at": token_data["expires_at"].isoformat() if token_data["expires_at"] else "",
             "revoked": "1" if token_data["revoked"] else "0",
-            "metadata": token_data["metadata"] or "{}"
+            "metadata": json.dumps(token_data["metadata"]) if token_data["metadata"] else "{}"
         }
     )
     await redis_client.expire(f"token:{token_hash}", settings.token_cache_ttl)
