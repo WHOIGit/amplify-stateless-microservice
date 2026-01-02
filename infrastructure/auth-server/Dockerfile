@@ -12,8 +12,5 @@ COPY stateless_microservice ./stateless_microservice
 # Install package with auth-server extras
 RUN pip install --no-cache-dir .[auth-server]
 
-# Expose port
-EXPOSE 8000
-
 # Run the auth server
 CMD ["amplify-auth-server"]

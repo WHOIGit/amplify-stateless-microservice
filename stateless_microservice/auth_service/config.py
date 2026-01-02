@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     token_cache_ttl: int = 1800  # 30 minutes
 
     # Security
-    admin_token: str | None = None  # Optional admin token for management endpoints
+    admin_token: str  # Required admin token for management endpoints
 
     # Service
     service_name: str = "amplify-auth"

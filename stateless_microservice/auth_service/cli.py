@@ -22,6 +22,15 @@ DEFAULT_PORT = os.getenv("PORT", "8000")
 DEFAULT_AUTH_URL = f"http://localhost:{DEFAULT_PORT}"
 
 
+def get_admin_headers():
+    """Get admin authorization headers from environment."""
+    admin_token = os.getenv("ADMIN_TOKEN")
+    if not admin_token:
+        print("Error: ADMIN_TOKEN environment variable not set", file=sys.stderr)
+        sys.exit(1)
+    return {"Authorization": f"Bearer {admin_token}"}
+
+
 async def create_token(auth_url: str, name: str, scopes: list[str], ttl_days: int | None):
     """Create a new token."""
     async with httpx.AsyncClient() as client:
@@ -34,6 +43,7 @@ async def create_token(auth_url: str, name: str, scopes: list[str], ttl_days: in
                     "ttl_days": ttl_days,
                     "metadata": {}
                 },
+                headers=get_admin_headers(),
                 timeout=10.0
             )
 
@@ -68,6 +78,7 @@ async def list_tokens(auth_url: str, include_revoked: bool):
             response = await client.get(
                 f"{auth_url}/auth/tokens",
                 params=params,
+                headers=get_admin_headers(),
                 timeout=10.0
             )
 
@@ -109,6 +120,7 @@ async def get_token_info(auth_url: str, token_id: str):
         try:
             response = await client.get(
                 f"{auth_url}/auth/tokens/{token_id}",
+                headers=get_admin_headers(),
                 timeout=10.0
             )
 
@@ -146,6 +158,7 @@ async def revoke_token(auth_url: str, token_id: str):
             response = await client.post(
                 f"{auth_url}/auth/tokens/{token_id}/revoke",
                 json={},
+                headers=get_admin_headers(),
                 timeout=10.0
             )
 

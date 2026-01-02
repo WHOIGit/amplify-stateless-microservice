@@ -10,7 +10,7 @@ from uuid import UUID
 
 import asyncpg
 import redis.asyncio as redis
-from fastapi import FastAPI, HTTPException, Security
+from fastapi import Depends, FastAPI, HTTPException, Header, Security
 from fastapi.security import HTTPBearer
 
 from .commands import CommandProcessor, CommandType
@@ -154,6 +154,41 @@ app = FastAPI(
 
 
 # ============================================
+# SECURITY DEPENDENCIES
+# ============================================
+
+async def verify_admin(authorization: str = Header(None)):
+    """
+    Verify admin access via bearer token.
+
+    Required for all management endpoints (create, revoke, list tokens).
+    """
+    if not authorization:
+        raise HTTPException(
+            status_code=401,
+            detail="Missing Authorization header",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid Authorization header format. Expected: Bearer <token>",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
+    token = authorization[7:]  # Remove "Bearer " prefix
+
+    if token != settings.admin_token:
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid admin token"
+        )
+
+    return True
+
+
+# ============================================
 # VALIDATION ENDPOINTS (Read-Only, High Traffic)
 # ============================================
 
@@ -283,7 +318,7 @@ def _validate_from_data(data: dict, required_scopes: list[str]) -> ValidateToken
 # TOKEN MANAGEMENT ENDPOINTS (Write Operations via Command Queue)
 # ============================================
 
-@app.post("/auth/tokens", response_model=TokenResponse, status_code=201)
+@app.post("/auth/tokens", response_model=TokenResponse, status_code=201, dependencies=[Depends(verify_admin)])
 async def create_token(request: CreateTokenRequest):
     """
     Create a new token.
@@ -310,7 +345,7 @@ async def create_token(request: CreateTokenRequest):
         raise HTTPException(status_code=504, detail="Command processing timeout")
 
 
-@app.post("/auth/tokens/{token_id}/revoke", response_model=RevokeTokenResponse)
+@app.post("/auth/tokens/{token_id}/revoke", response_model=RevokeTokenResponse, dependencies=[Depends(verify_admin)])
 async def revoke_token(token_id: str, request: RevokeTokenRequest = None):
     """
     Revoke a token immediately.
@@ -339,7 +374,7 @@ async def revoke_token(token_id: str, request: RevokeTokenRequest = None):
         raise HTTPException(status_code=504, detail="Command processing timeout")
 
 
-@app.get("/auth/tokens", response_model=TokenListResponse)
+@app.get("/auth/tokens", response_model=TokenListResponse, dependencies=[Depends(verify_admin)])
 async def list_tokens(include_revoked: bool = False):
     """List all tokens (without the actual token values)."""
     async with db_pool.acquire() as conn:
@@ -381,7 +416,7 @@ async def list_tokens(include_revoked: bool = False):
     return TokenListResponse(tokens=token_list, total=len(token_list))
 
 
-@app.get("/auth/tokens/{token_id}", response_model=TokenInfoResponse)
+@app.get("/auth/tokens/{token_id}", response_model=TokenInfoResponse, dependencies=[Depends(verify_admin)])
 async def get_token(token_id: str):
     """Get information about a specific token."""
     # Validate UUID format

@@ -123,24 +123,30 @@ You may define your own scopes as needed. Each scope is represented by a string.
 
 ## Configuration
 
-Available environment variables for docker-compose (`.env` file):
+**Required environment variables:**
 
+Generate a secure admin token:
 ```bash
-AUTH_SERVICE_PORT=8001  # Port that the auth API will be available on (default: 8000)
-POSTGRES_PORT=5433      # PostgreSQL host port (default: 5432)
-POSTGRES_DB=my_auth_db  # Database name (default: auth_db)
-POSTGRES_USER=my_user   # Database user (default: auth_user)
-POSTGRES_PASSWORD=my_pass  # Database password (default: auth_pass)
-REDIS_PORT=6379         # Redis host port (default: 6379)
+# Generate a secure random token
+openssl rand -base64 32
+
+# Add to .env file
+echo "ADMIN_TOKEN=$(openssl rand -base64 32)" >> .env
 ```
 
-## Security Notes
+Or set it manually in your `.env` file:
+```bash
+ADMIN_TOKEN=your-secure-admin-token-here  # Admin token for CLI and management API access
+```
 
-- Tokens are shown **only once** when created
-- Only SHA256 hashes are stored in the database
-- Revoked tokens are cached in Redis for fast rejection
-- All validation is read-only (no side effects)
-- Admin operations should be protected (network-level or admin tokens)
+**Optional environment variables for docker-compose (`.env` file):**
+
+```bash
+AUTH_SERVICE_PORT=8042      # Internal auth service port (default: 8000)
+POSTGRES_DB=my_auth_db      # Database name (default: auth_db)
+POSTGRES_USER=my_user       # Database user (default: auth_user)
+POSTGRES_PASSWORD=my_pass   # Database password (default: auth_pass)
+```
 
 ## Monitoring
 

@@ -9,8 +9,6 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
     networks:
       - amplify-net
     healthcheck:
@@ -25,8 +23,6 @@ services:
     command: redis-server --maxmemory 2gb --maxmemory-policy allkeys-lru
     volumes:
       - redis-data:/data
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
     networks:
       - amplify-net
     healthcheck:
@@ -45,13 +41,12 @@ services:
       REDIS_URL: redis://redis:6379/0
       TOKEN_CACHE_TTL: 1800
       PORT: ${AUTH_SERVICE_PORT:-8000}
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    ports:
-      - "${AUTH_SERVICE_PORT:-8000}:${AUTH_SERVICE_PORT:-8000}"
     networks:
       - amplify-net
     healthcheck:
