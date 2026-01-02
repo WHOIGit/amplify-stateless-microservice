@@ -32,9 +32,7 @@ services:
       retries: 5
 
   auth-service:
-    build:
-      context: ../..
-      dockerfile: infrastructure/auth-server/Dockerfile
+    image: ghcr.io/${GITHUB_REPOSITORY:-amplify/amplify_stateless_microservice}/auth-server:${AUTH_SERVER_VERSION:-latest}
     container_name: amplify-auth-service
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-auth_user}:${POSTGRES_PASSWORD:-auth_pass}@postgres:5432/${POSTGRES_DB:-auth_db}

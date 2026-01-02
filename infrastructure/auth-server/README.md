@@ -9,16 +9,32 @@ Token-based authentication service for AMPLIfy microservices.
 - **Command Queue** - Single-threaded write operations
 - **FastAPI** - HTTP API for validation and management
 
-## Usage
+## Quick Start
 
-### 1. Start the auth infrastructure
+### 1. Download docker-compose.yml
 
 ```bash
-cd infrastructure/auth-server
+curl -O https://raw.githubusercontent.com/YOUR_ORG/amplify_stateless_microservice/main/infrastructure/auth-server/docker-compose.yml
+```
+
+### 2. Configure your environment
+
+```bash
+# Create .env file with admin token
+echo "ADMIN_TOKEN=$(openssl rand -base64 32)" > .env
+```
+
+### 3. Start the auth infrastructure
+
+```bash
 docker-compose up -d
 ```
 
-### 2. Token management via CLI
+The auth server image will be pulled from GitHub Container Registry automatically.
+
+## Usage
+
+### Token management via CLI
 
 ```bash
 # Create a read-only token
@@ -39,7 +55,7 @@ docker-compose exec auth-service amplify-auth-cli info <token_id>
 docker-compose exec auth-service amplify-auth-cli revoke <token_id>
 ```
 
-### 3. Use tokens in your services
+### Use tokens in your services
 
 ```python
 from stateless_microservice import AuthClient, StatelessAction
