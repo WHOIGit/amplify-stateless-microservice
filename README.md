@@ -109,3 +109,23 @@ This repo contains a library for quickly generating stateless microservices. It 
         ├── processor.py        # Subclass of BaseProcessor with StatelessAction definitions
         └── main.py             # create_app + uvicorn entrypoint
     ```
+
+## Aggregating API Documentation
+
+Use the `aggregate-openapi` command to combine OpenAPI specs from multiple microservices into a single Swagger UI.
+
+**IMPORTANT:** Service URLs must use the same public hostname to enable "Try it out" functionality in Swagger UI/ReDoc.
+
+**Basic usage:**
+```bash
+aggregate-openapi https://hostname/service1 https://hostname/service2
+# Access at http://localhost:8000/docs
+```
+
+**Behind Apache reverse proxy:**
+```bash
+aggregate-openapi https://hostname/service1 https://hostname/service2 \
+  --path /api-docs --port 8080 --apache-config --hostname hostname
+# Copy the printed Apache config into your Apache configuration
+# Access at https://hostname/api-docs/docs
+```
