@@ -241,9 +241,19 @@ def main():
     # Serve with FastAPI
     app = create_gateway_app(aggregated, root_path=root_path)
     print(f"\nServing aggregated API docs at:")
-    print(f"   Swagger UI: http://localhost:{args.port}{root_path}/docs")
-    print(f"   ReDoc:      http://localhost:{args.port}{root_path}/redoc")
-    print(f"   OpenAPI:    http://localhost:{args.port}{root_path}/openapi.json")
+
+    # Show public URLs if hostname is provided, otherwise show localhost
+    if args.apache_config and args.hostname:
+        protocol = "https" if args.https else "http"
+        base_url = f"{protocol}://{args.hostname}{root_path}"
+        print(f"   Swagger UI: {base_url}/docs")
+        print(f"   ReDoc:      {base_url}/redoc")
+        print(f"   OpenAPI:    {base_url}/openapi.json")
+    else:
+        print(f"   Swagger UI: http://localhost:{args.port}{root_path}/docs")
+        print(f"   ReDoc:      http://localhost:{args.port}{root_path}/redoc")
+        print(f"   OpenAPI:    http://localhost:{args.port}{root_path}/openapi.json")
+
     uvicorn.run(app, host="0.0.0.0", port=args.port)
 
 

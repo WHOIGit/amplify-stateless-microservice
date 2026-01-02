@@ -112,18 +112,20 @@ This repo contains a library for quickly generating stateless microservices. It 
 
 ## Aggregating API Documentation
 
-Use `aggregate_openapi.py` to combine OpenAPI specs from multiple microservices into a single Swagger UI:
+Use `aggregate_openapi.py` to combine OpenAPI specs from multiple microservices into a single Swagger UI.
 
-**Local development:**
+**IMPORTANT:** Service URLs must use the same public hostname to enable "Try it out" functionality in Swagger UI/ReDoc.
+
+**Basic usage:**
 ```bash
-python aggregate_openapi.py http://localhost:8001 http://localhost:8002
+python aggregate_openapi.py https://hostname/service1 https://hostname/service2
 # Access at http://localhost:8000/docs
 ```
 
 **Behind Apache reverse proxy:**
 ```bash
-python aggregate_openapi.py http://service1 http://service2 \
-  --path /api-docs --port 8080 --apache-config --hostname example.com
+python aggregate_openapi.py https://hostname/service1 https://hostname/service2 \
+  --path /api-docs --port 8080 --apache-config --hostname hostname
 # Copy the printed Apache config into your Apache configuration
-# Access at https://example.com/api-docs/docs
+# Access at https://hostname/api-docs/docs
 ```
