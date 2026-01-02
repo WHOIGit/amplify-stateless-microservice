@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: amplify-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-auth_db}
+      POSTGRES_USER: ${POSTGRES_USER:-auth_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-auth_pass}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - amplify-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-auth_user} -d ${POSTGRES_DB:-auth_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    container_name: amplify-redis
+    command: redis-server --maxmemory 2gb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - amplify-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    image: ghcr.io/${GITHUB_REPOSITORY:-amplify/amplify_stateless_microservice}/auth-server:${AUTH_SERVER_VERSION:-latest}
+    container_name: amplify-auth-service
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-auth_user}:${POSTGRES_PASSWORD:-auth_pass}@postgres:5432/${POSTGRES_DB:-auth_db}
+      REDIS_URL: redis://redis:6379/0
+      TOKEN_CACHE_TTL: 1800
+      PORT: ${AUTH_SERVICE_PORT:-8000}
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - amplify-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:$${PORT:-8000}/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  amplify-net:
+    driver: bridge
