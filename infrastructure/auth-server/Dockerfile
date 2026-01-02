@@ -9,6 +9,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf 
 COPY pyproject.toml README.md ./
 COPY stateless_microservice ./stateless_microservice
 
+# Copy database schema
+COPY infrastructure/auth-server/schema.sql /app/schema.sql
+
 # Install package with auth-server extras
 RUN pip install --no-cache-dir .[auth-server]
 

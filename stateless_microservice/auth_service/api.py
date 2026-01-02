@@ -6,6 +6,7 @@ import json
 import logging
 from contextlib import asynccontextmanager
 from datetime import datetime
+from pathlib import Path
 from uuid import UUID
 
 import asyncpg
@@ -71,6 +72,9 @@ async def lifespan(app: FastAPI):
     )
     logger.info("Connected to PostgreSQL")
 
+    # Initialize database schema
+    await _init_schema()
+
     # Connect to Redis
     redis_client = redis.from_url(settings.redis_url, decode_responses=True)
     await redis_client.ping()
@@ -104,6 +108,28 @@ async def lifespan(app: FastAPI):
         await db_pool.close()
 
     logger.info("Auth service stopped")
+
+
+async def _init_schema():
+    """Initialize database schema from schema.sql file."""
+    schema_path = Path("/app/schema.sql")
+
+    if not schema_path.exists():
+        logger.warning(f"Schema file not found at {schema_path}, skipping schema initialization")
+        return
+
+    logger.info("Initializing database schema...")
+
+    try:
+        schema_sql = schema_path.read_text()
+
+        async with db_pool.acquire() as conn:
+            await conn.execute(schema_sql)
+
+        logger.info("Database schema initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize schema: {e}")
+        raise
 
 
 async def _warm_cache():
