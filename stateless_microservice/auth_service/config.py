@@ -1,10 +1,16 @@
 """Configuration for auth service."""
 
+from pydantic import ConfigDict
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
     """Auth service settings loaded from environment variables."""
+
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8"
+    )
 
     # Database
     database_url: str = "postgresql://auth_user:auth_pass@localhost:5432/auth_db"
@@ -22,10 +28,6 @@ class Settings(BaseSettings):
     service_name: str = "amplify-auth"
     service_version: str = "1.0.0"
     port: int = 8000
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
 
 
 settings = Settings()
