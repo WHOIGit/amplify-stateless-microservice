@@ -14,7 +14,7 @@ Token-based authentication service for AMPLIfy microservices.
 ### 1. Download docker-compose.yml
 
 ```bash
-curl -O https://raw.githubusercontent.com/YOUR_ORG/amplify_stateless_microservice/main/infrastructure/auth-server/docker-compose.yml
+curl -O https://raw.githubusercontent.com/WHOIGit/amplify-stateless-microservice/main/infrastructure/auth-server/docker-compose.yml
 ```
 
 ### 2. Configure your environment
