@@ -5,6 +5,7 @@ from .api import create_app, ServiceConfig
 from .config import settings
 from .direct import fetch_s3_bytes, run_blocking, render_bytes
 from .apache_conf import ApacheConfigParams, generate_apache_vhost_config
+from .auth import AuthClient
 
 __version__ = "1.0.0"
 
@@ -20,4 +21,5 @@ __all__ = [
     "render_bytes",
     "ApacheConfigParams",
     "generate_apache_vhost_config",
+    "AuthClient",
 ]

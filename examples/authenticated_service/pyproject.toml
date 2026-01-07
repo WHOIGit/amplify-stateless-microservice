@@ -1,0 +1,12 @@
+[project]
+name = "authenticated-service-example"
+version = "1.0.0"
+description = "Example authenticated microservice"
+requires-python = ">=3.12"
+dependencies = [
+    "amplify-stateless[auth]",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

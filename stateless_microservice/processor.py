@@ -24,6 +24,7 @@ class StatelessAction:
         description: Optional longer description.
         tags: Optional OpenAPI tags.
         media_type: Optional override for response media type.
+        required_scopes: Optional list of scopes required for authentication.
     """
 
     name: str
@@ -37,6 +38,7 @@ class StatelessAction:
     description: str | None = None
     tags: tuple[str, ...] | None = None
     media_type: str | None = None
+    required_scopes: list[str] | None = None
 
 
 class BaseProcessor(ABC):
