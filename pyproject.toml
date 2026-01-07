@@ -12,9 +12,6 @@ dependencies = [
     "boto3>=1.35.0",
 ]
 
-[project.scripts]
-aggregate-openapi = "stateless_microservice.aggregate_openapi:main"
-
 [project.optional-dependencies]
 auth = [
     "httpx>=0.27.0",
@@ -33,6 +30,7 @@ test = [
 ]
 
 [project.scripts]
+aggregate-openapi = "stateless_microservice.aggregate_openapi:main"
 amplify-auth-server = "stateless_microservice.auth_service.main:main"
 amplify-auth-cli = "stateless_microservice.auth_service.cli:main"
 
