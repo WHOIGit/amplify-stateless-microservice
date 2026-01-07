@@ -1,6 +1,6 @@
 """Stateless Microservice toolkit for synchronous FastAPI services."""
 
-from .processor import BaseProcessor, StatelessAction
+from .processor import BaseProcessor, StatelessAction, stateless_action
 from .api import create_app, ServiceConfig
 from .config import settings
 from .direct import fetch_s3_bytes, run_blocking, render_bytes
@@ -13,6 +13,7 @@ __version__ = "1.0.0"
 __all__ = [
     "BaseProcessor",
     "StatelessAction",
+    "stateless_action",
     "create_app",
     "ServiceConfig",
     "settings",

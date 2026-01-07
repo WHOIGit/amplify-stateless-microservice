@@ -1,10 +1,8 @@
 """Simple processor that appends two path parameters together."""
 
-from typing import List
-
 from pydantic import BaseModel, Field
 
-from stateless_microservice import BaseProcessor, StatelessAction
+from stateless_microservice import BaseProcessor, stateless_action
 
 
 class AppendPathParams(BaseModel):
@@ -27,23 +25,18 @@ class StringAppenderProcessor(BaseProcessor):
     def name(self) -> str:
         return "string-appender"
 
-    def get_stateless_actions(self) -> List[StatelessAction]:
-        return [
-            StatelessAction(
-                name="append_strings",
-                path="/append/{first}/{second}",
-                path_params_model=AppendPathParams,
-                response_model=AppendResponse,
-                handler=self.handle_append,
-                methods=("GET",),
-                summary="Append two path parameters together.",
-                description=(
-                    "Demonstrates path parameter usage by taking two strings from the URL path "
-                    "and returning them concatenated together."
-                ),
-            ),
-        ]
-
+    @stateless_action(
+        name="append_strings",
+        path="/append/{first}/{second}",
+        path_params_model=AppendPathParams,
+        response_model=AppendResponse,
+        methods=("GET",),
+        summary="Append two path parameters together.",
+        description=(
+            "Demonstrates path parameter usage by taking two strings from the URL path "
+            "and returning them concatenated together."
+        ),
+    )
     async def handle_append(self, path_params: AppendPathParams) -> AppendResponse:
         """Append the two path parameters and return the result."""
         result = path_params.first + path_params.second
