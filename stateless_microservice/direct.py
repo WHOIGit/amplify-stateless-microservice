@@ -3,6 +3,7 @@
 import asyncio
 import io
 from typing import Any, Awaitable, Callable, TYPE_CHECKING
+from collections.abc import Mapping
 
 from fastapi import HTTPException, Response
 
@@ -66,12 +67,12 @@ async def run_blocking(func: Callable[..., Any], *args: Any, **kwargs: Any) -> A
     return await asyncio.to_thread(func, *args, **kwargs)
 
 
-def render_bytes(payload: bytes | bytearray | memoryview, media_type: str) -> Response:
+def render_bytes(payload: bytes | bytearray | memoryview, media_type: str, headers: Mapping[str, str] | None = None) -> Response:
     """
     Shortcut for returning binary payloads from stateless actions.
     """
 
-    return Response(content=bytes(payload), media_type=media_type)
+    return Response(content=bytes(payload), media_type=media_type, headers=headers)
 
 
 __all__ = ["fetch_s3_bytes", "run_blocking", "render_bytes"]
