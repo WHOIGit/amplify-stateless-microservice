@@ -3,7 +3,10 @@
 import inspect
 import logging
 import re
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from typing import Callable
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
@@ -11,6 +14,8 @@ from pydantic import BaseModel, ValidationError
 
 from .models import ErrorResponse, HealthResponse
 from .processor import BaseProcessor, StatelessAction
+
+Lifespan = Callable[[FastAPI], AsyncGenerator[None, None]]
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +39,8 @@ class ServiceConfig:
 def create_app(
     processor: BaseProcessor,
     config: ServiceConfig | None = None,
-    auth_client=None
+    auth_client=None,
+    lifespan: Lifespan | None = None,
 ) -> FastAPI:
     """
     Create a FastAPI application for a stateless processor.
@@ -43,6 +49,7 @@ def create_app(
         processor: The processor instance implementing business logic
         config: Optional service configuration
         auth_client: Optional AuthClient for token-based authentication
+        lifespan: Optional async context manager for startup/shutdown lifecycle
     """
 
     config = config or ServiceConfig()
@@ -60,6 +67,7 @@ def create_app(
         title=f"{service_name.title()} Stateless API",
         description=service_description,
         version=service_version,
+        lifespan=lifespan,
     )
 
     app.state.processor = processor
