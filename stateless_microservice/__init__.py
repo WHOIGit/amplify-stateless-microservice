@@ -1,7 +1,7 @@
 """Stateless Microservice toolkit for synchronous FastAPI services."""
 
 from .processor import BaseProcessor, StatelessAction
-from .api import create_app, ServiceConfig
+from .api import create_app, ServiceConfig, Lifespan
 from .config import settings
 from .direct import fetch_s3_bytes, run_blocking, render_bytes
 from .apache_conf import ApacheConfigParams, generate_apache_vhost_config
@@ -14,6 +14,7 @@ __all__ = [
     "StatelessAction",
     "create_app",
     "ServiceConfig",
+    "Lifespan",
     "settings",
     "fetch_s3_bytes",
     "run_blocking",
