@@ -71,6 +71,7 @@ def create_app(
     )
 
     app.state.processor = processor
+    processor.app = app
     app.state.service_config = config
 
     @app.exception_handler(ValidationError)
